@@ -1,9 +1,11 @@
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import React, { useRef, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
-const HeroSection = ({ isLoaded, themeIndex, onThemeChange, isScrolled }) => {
-
+const HeroSection = ({ isLoaded, themeIndex, onThemeChange, isScrolled, movingShoeRef }) => {
+  const navigate = useNavigate();
   const containerRef = useRef(null);
   const leftRef = useRef(null);
   const rightRef = useRef(null);
@@ -13,6 +15,7 @@ const HeroSection = ({ isLoaded, themeIndex, onThemeChange, isScrolled }) => {
   const descRef = useRef(null);
   const badgesRef = useRef(null);
   const dividerRef = useRef(null);
+  const buttonRef = useRef(null);
   const platformRef = useRef(null);
   const scrollIndicatorRef = useRef(null);
 
@@ -20,100 +23,40 @@ const HeroSection = ({ isLoaded, themeIndex, onThemeChange, isScrolled }) => {
 
   useGSAP(() => {
     if (!isLoaded) return;
+    gsap.registerPlugin(ScrollTrigger);
 
     const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
-    // --- LEFT SIDE: slides in from left first ---
-    tl.from(leftRef.current, {
-      x: -80,
-      opacity: 0,
-      duration: 1,
-    }, 0);
+    // --- ENTRANCE SEQUENCE ---
+    tl.from(leftRef.current, { x: -80, opacity: 0, duration: 1 }, 0)
+      .from(titleRef.current, { y: -50, opacity: 0, duration: 0.9, ease: "back.out(1.4)" }, 0.1)
+      .from(subtitleRef.current, { y: 25, opacity: 0, duration: 0.7 }, 0.35)
+      .from(dividerRef.current, { scaleX: 0, transformOrigin: "left center", duration: 0.8 }, 0.5)
+      .fromTo(buttonRef.current, { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7 }, 0.7);
 
-    // --- TITLE: drops down with a slight overshoot ---
-    tl.from(titleRef.current, {
-      y: -50,
-      opacity: 0,
-      duration: 0.9,
-      ease: "back.out(1.4)",
-    }, 0.1);
+    // Initial entrance for the LOCAL shoe
+    if (shoeRef.current) {
+      tl.fromTo(shoeRef.current,
+        { x: 900, opacity: 0, scale: 0.75, rotation: 20 },
+        { x: 0, opacity: 1, scale: 1, rotation: 0, duration: 1.4, ease: "expo.out" },
+        0.3
+      );
+    }
 
-    // --- SUBTITLE: rises up ---
-    tl.from(subtitleRef.current, {
-      y: 25,
-      opacity: 0,
-      duration: 0.7,
-    }, 0.35);
+    tl.from(platformRef.current, { opacity: 0, scale: 0.5, duration: 0.6 }, 1.4);
 
-    // --- DIVIDER LINE: width expands from 0 ---
-    tl.from(dividerRef.current, {
-      scaleX: 0,
-      transformOrigin: "left center",
-      duration: 0.8,
-      ease: "power2.inOut",
-    }, 0.5);
+    // --- CONTINUOUS FLOATING ---
+    if (shoeRef.current) {
+      gsap.to(shoeRef.current, {
+        y: -18,
+        duration: 2.8,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut",
+        delay: 1.8,
+      });
+    }
 
-    // --- DESCRIPTION: fades up ---
-    tl.from(descRef.current, {
-      y: 20,
-      opacity: 0,
-      duration: 0.7,
-    }, 0.6);
-
-    // --- BADGES: pop in one by one ---
-    tl.from(badgesRef.current?.querySelectorAll("span"), {
-      y: 15,
-      opacity: 0,
-      scale: 0.85,
-      duration: 0.5,
-      stagger: 0.12,
-      ease: "back.out(2)",
-    }, 0.75);
-
-    // --- RIGHT SIDE: slides in from right ---
-    tl.from(rightRef.current, {
-      x: 80,
-      opacity: 0,
-      duration: 0.9,
-    }, 0.2);
-
-    // --- SHOE: dramatic entrance from right with rotation ---
-    tl.from(shoeRef.current, {
-      x: 900,
-      opacity: 0,
-      scale: 0.75,
-      rotation: 20,
-      duration: 1.4,
-      ease: "expo.out",
-    }, 0.3);
-
-    // --- PLATFORM ELLIPSES: fade in after shoe lands ---
-    tl.from(platformRef.current, {
-      opacity: 0,
-      scale: 0.5,
-      transformOrigin: "center center",
-      duration: 0.6,
-      ease: "power2.out",
-    }, 1.4);
-
-    // --- SCROLL INDICATOR: fades in last ---
-    tl.from(scrollIndicatorRef.current, {
-      opacity: 0,
-      y: 10,
-      duration: 0.6,
-    }, 1.6);
-
-    // --- SHOE: infinite float after landing ---
-    gsap.to(shoeRef.current, {
-      y: -18,
-      duration: 2.8,
-      repeat: -1,
-      yoyo: true,
-      ease: "sine.inOut",
-      delay: 1.8,
-    });
-
-    // --- PLATFORM: subtle pulse in sync with shoe float ---
     gsap.to(platformRef.current, {
       scaleX: 0.85,
       opacity: 0.5,
@@ -126,14 +69,13 @@ const HeroSection = ({ isLoaded, themeIndex, onThemeChange, isScrolled }) => {
 
   }, [isLoaded]);
 
-
   const shoes = [
     {
       name: "Air More Uptempo",
       color: "Black",
       image: "/images/tempo.png",
-      bg: "from-[#2b2b2b] via-[#121212] to-[#000000]",
-      price: "$229",
+      bg: "#000000",
+      price: "₹18,999",
       rotate: "-20deg",
       scale: 0.95,
       title1: "Own the",
@@ -144,8 +86,8 @@ const HeroSection = ({ isLoaded, themeIndex, onThemeChange, isScrolled }) => {
       name: "Air Jordan 18",
       color: "Green",
       image: "/images/jordan.png",
-      bg: "from-[#a8ff00] via-[#3a7d2c] to-[#041b12]",
-      price: "$199",
+      bg: "#003311",
+      price: "₹16,499",
       rotate: "20deg",
       translateY: "60px",
       scale: 1.1,
@@ -157,165 +99,135 @@ const HeroSection = ({ isLoaded, themeIndex, onThemeChange, isScrolled }) => {
       name: "Air DT Max '96",
       color: "Red",
       image: "/images/dtmax.png",
-      bg: "from-[#ff4d4d] via-[#c1121f] to-[#2b0000]",
-      price: "$219",
+      bg: "#4d0000",
+      price: "₹17,999",
       rotate: "-20deg",
       scale: 0.85,
       title1: "Elevate every",
       strokeWord: "step",
       title2: "you take.",
     },
+    {
+      name: "Air Max Premium",
+      color: "White",
+      image: "/d69971809daa3242a4b6efc91e7a4d2a-removebg-preview.png",
+      bg: "#ffffff",
+      price: "₹19,499",
+      rotate: "-10deg",
+      scale: 1.0,
+      title1: "Pure",
+      strokeWord: "elegance",
+      title2: "in motion.",
+    }
   ];
 
-  // --- Shoe change animation ---
-  // When user clicks arrow, shoe flies out then new one flies in
   const animateShoeChange = (newIndex) => {
-    const shoeEl = shoeRef.current;
     const titleEl = titleRef.current;
     const subtitleEl = subtitleRef.current;
 
-    // Phase 1: current shoe and text fly out
-    gsap.to(shoeEl, {
-      x: -300,
-      opacity: 0,
-      scale: 0.8,
-      rotation: -10,
-      duration: 0.15,
-      ease: "power1.in",
-    });
+    if (shoeRef.current) {
+      gsap.to(shoeRef.current, {
+        x: -300, opacity: 0, scale: 0.8, rotation: -10, duration: 0.15, ease: "power1.in",
+        onComplete: () => {
+          onThemeChange(newIndex);
+          gsap.fromTo(shoeRef.current,
+            { x: 400, opacity: 0, scale: 0.8, rotation: 15 },
+            { x: 0, opacity: 1, scale: 1, rotation: 0, duration: 0.2, ease: "expo.out" }
+          );
+        }
+      });
+    }
 
-    gsap.to([titleEl, subtitleEl], {
-      y: -20,
-      opacity: 0,
-      duration: 0.15,
-      stagger: 0.05,
-      ease: "power1.in",
+    gsap.to([titleEl, subtitleEl, buttonRef.current], {
+      y: -20, opacity: 0, duration: 0.15, stagger: 0.05,
       onComplete: () => {
-        // Switch shoe and text after they exit via global state
-        onThemeChange(newIndex);
-
-        // Phase 2: new shoe and text fly in
-        gsap.fromTo(shoeEl,
-          { x: 400, opacity: 0, scale: 0.8, rotation: 15 },
-          { x: 0, opacity: 1, scale: 1, rotation: 0, duration: 0.2, ease: "expo.out" }
-        );
-
-        gsap.fromTo([titleEl, subtitleEl],
+        gsap.fromTo([titleEl, subtitleEl, buttonRef.current],
           { y: 20, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.2, stagger: 0.05, ease: "power1.out", delay: 0.05 }
+          { y: 0, opacity: 1, duration: 0.2, stagger: 0.05, ease: "power1.out" }
         );
-      },
+      }
     });
-  };
-
-  const nextSlide = () => {
-    animateShoeChange((currentIndex + 1) % shoes.length);
-  };
-
-  const prevSlide = () => {
-    animateShoeChange(currentIndex === 0 ? shoes.length - 1 : currentIndex - 1);
   };
 
   useEffect(() => {
     if (!isLoaded || isScrolled) return;
     const timer = setInterval(() => {
       animateShoeChange((currentIndex + 1) % shoes.length);
-    }, 1500);
+    }, 4000);
     return () => clearInterval(timer);
   }, [isLoaded, isScrolled, currentIndex, shoes.length]);
-
 
   return (
     <div
       ref={containerRef}
-      className={`w-full h-screen bg-gradient-to-br ${shoes[currentIndex].bg} ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-        } relative flex items-center justify-between px-6 md:px-10 overflow-hidden`}
+      style={{ backgroundColor: shoes[currentIndex].bg }}
+      className={`w-full h-screen ${isLoaded ? "opacity-100" : "opacity-0"} relative flex flex-col md:flex-row items-center justify-start md:justify-between px-6 md:px-16 overflow-hidden transition-colors duration-700 pt-6 md:pt-28`}
     >
-
       {/* ================= LEFT CONTENT ================= */}
-      <div ref={leftRef} className="w-full md:w-[60%] md:max-w-[480px] z-10 -mt-32 md:mt-20">
+      <div ref={leftRef} className="w-full h-full md:h-auto md:w-[60%] md:max-w-[550px] z-30 flex flex-col items-center md:items-start text-center md:text-left relative justify-between md:justify-start py-4 md:py-0">
+        <div className="flex flex-col items-center md:items-start mt-4 md:mt-0">
+          <h1 ref={titleRef} className={`text-3xl sm:text-5xl md:text-[64px] font-black uppercase ${shoes[currentIndex].color === 'White' ? 'text-[#006437]' : 'text-white'} leading-[1.1] tracking-normal`}>
+            {shoes[currentIndex].title1}<br />
+            <span className="text-transparent" style={{ WebkitTextStroke: `1.5px ${shoes[currentIndex].color === 'White' ? 'rgba(0,100,55,1)' : 'rgba(255,255,255,1)'}` }}>
+              {shoes[currentIndex].strokeWord}
+            </span> {shoes[currentIndex].title2}
+          </h1>
 
-        <h1 ref={titleRef} className="text-3xl sm:text-4xl md:text-[52px] font-black uppercase text-white leading-[1.2] tracking-wide">
-          {shoes[currentIndex].title1}<br />
-          <span className="text-transparent" style={{ WebkitTextStroke: "1px rgba(255,255,255,1)" }}>
-            {shoes[currentIndex].strokeWord}
-          </span> {shoes[currentIndex].title2}
-        </h1>
+          <h2 ref={subtitleRef} className={`text-xs sm:text-base md:text-3xl font-bold tracking-[2px] md:tracking-[8px] uppercase ${shoes[currentIndex].color === 'White' ? 'text-[#006437]' : 'text-white'} mt-4 md:mt-10`}>
+            {shoes[currentIndex].name}
+          </h2>
 
-        <h2 ref={subtitleRef} className="text-sm sm:text-base md:text-3xl font-bold tracking-[2px] md:tracking-[8px] uppercase text-white mt-4 md:mt-12">
-          {shoes[currentIndex].name}
-        </h2>
-
-        {/* Divider — now has its own ref for animation */}
-        <div
-          ref={dividerRef}
-          className="h-[1px] md:h-[2px] w-20 md:w-82 mt-2 md:mt-3"
-          style={{ background: "linear-gradient(to right, #fff, transparent)" }}
-        />
-
-        <div className="h-full w-full pt-4 md:pt-45">
-          <p ref={descRef} className="w-full md:w-[420px] text-white/85 text-[10px] md:text-[14px] leading-[1.6] md:leading-[1.8] mt-4 md:mt-7">
-          </p>
-
-          <div ref={badgesRef} className="flex flex-wrap gap-2 md:gap-3 mt-4 md:mt-8">
-          </div>
+          <div ref={dividerRef} className="h-1 w-20 md:w-32 mt-6 bg-white/30" />
         </div>
+
+        <button
+          ref={buttonRef}
+          onClick={() => navigate('/collections')}
+          className={`md:mt-12 px-8 py-3 rounded-full font-black uppercase tracking-widest text-xs md:text-sm transition-all duration-300 hover:scale-110 active:scale-95 shadow-xl hover:shadow-2xl flex items-center gap-3 group z-40 mb-14 md:mb-0 ${shoes[currentIndex].color === 'White'
+              ? 'bg-[#006437] text-white'
+              : 'bg-white text-black'
+            }`}
+        >
+          Shop Now
+          <svg
+            className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-2"
+            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+          </svg>
+        </button>
       </div>
 
 
-      {/* ================= SHOES SLIDER ================= */}
+      {/* ================= LOCAL SHOE ================= */}
       <div
-        ref={shoeRef}
-        className="absolute right-[-10%] sm:right-[5%] md:right-[5%] lg:right-[10%] top-[65%] md:top-1/2 -translate-y-1/2 w-[260px] sm:w-[350px] md:w-[600px] h-[300px] md:h-[600px] flex items-center justify-center"
+        className="absolute left-1/2 md:left-auto md:right-[5%] top-[54%] md:top-1/2 -translate-x-1/2 md:translate-x-0 -translate-y-1/2 w-[240px] sm:w-[350px] md:w-[700px] h-[200px] md:h-[600px] flex items-center justify-center pointer-events-none z-10"
       >
-        {/* Only render the active shoe — GSAP handles all transitions */}
         <img
+          ref={shoeRef}
           src={shoes[currentIndex].image}
-          alt={shoes[currentIndex].color}
-          className={`absolute w-full transition-opacity duration-300 ${isScrolled ? 'opacity-0 hidden' : 'opacity-100'}`}
+          alt="Featured Shoe"
+          className="w-full h-auto object-contain drop-shadow-[0_40px_120px_rgba(0,0,0,0.9)] opacity-0"
           style={{
-            transform: `rotate(${shoes[currentIndex].rotate}) translateY(${shoes[currentIndex].translateY || "0px"}) scale(${shoes[currentIndex].scale})`,
-            filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.6))",
+            transform: `translateY(${shoes[currentIndex].translateY || "0px"}) rotate(${shoes[currentIndex].rotate || "0deg"}) scale(${shoes[currentIndex].scale || 1})`,
+            transformOrigin: 'center center',
           }}
         />
 
-        {/* Platform ellipses — now has ref for animation */}
+        {/* Platform ellipses */}
         <svg
           ref={platformRef}
-          className="absolute top-full -translate-y-16 md:-translate-y-12"
+          className="absolute bottom-1/4 md:bottom-12"
           width="100%"
           height="80"
           viewBox="0 0 500 80"
         >
-          <ellipse cx="250" cy="40" rx="200" ry="35"
-            fill="none" stroke="rgba(255,255,255,0.3)"
-            strokeWidth="2" strokeDasharray="5,5"
-          />
-          <ellipse cx="250" cy="40" rx="180" ry="30"
-            fill="none" stroke="rgba(255,255,255,0.15)"
-            strokeWidth="1"
-          />
+          <ellipse cx="250" cy="40" rx="200" ry="35" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1" strokeDasharray="5,5" />
+          <ellipse cx="250" cy="40" rx="180" ry="30" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
         </svg>
       </div>
-
-
-
-
-
-      {/* ================= SCROLL INDICATOR ================= */}
-      <div
-        ref={scrollIndicatorRef}
-      >
-      </div>
-
-
-
-
     </div>
   );
 };
 
 export default HeroSection;
-
-
-
