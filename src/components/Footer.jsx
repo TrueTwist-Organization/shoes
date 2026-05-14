@@ -94,7 +94,28 @@ const Footer = ({ theme }) => {
 
         {/* Bottom Bar */}
         <div className={`border-t ${borderClass} pt-8 flex flex-col md:flex-row justify-between items-center gap-6 relative z-10`}>
-          <p className={`${isWhite ? 'text-[#1B4332]/40' : 'text-gray-500'} text-sm font-medium`}>© 2026 Nike Kicks. All rights reserved.</p>
+          <div className="flex flex-col space-y-2 items-center md:items-start">
+            <p className={`${isWhite ? 'text-[#1B4332]/40' : 'text-gray-500'} text-sm font-medium`}>© 2026 Nike Kicks. All rights reserved.</p>
+            <div className={`flex items-center space-x-4 text-[10px] font-bold uppercase tracking-[2px] ${isWhite ? 'text-[#1B4332]/40' : 'text-gray-600'}`}>
+              <a 
+                href="https://truetwist.in/" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className={`transition-colors duration-300 hover:${isWhite ? 'text-[#1B4332]' : 'text-white'}`}
+              >
+                Designed By Trutwist
+              </a>
+              <span className="opacity-20 text-[8px]">|</span>
+              <a 
+                href="https://369network.com/" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className={`transition-colors duration-300 hover:${isWhite ? 'text-[#1B4332]' : 'text-white'}`}
+              >
+                Marketing By 369 Network
+              </a>
+            </div>
+          </div>
 
           <button
             onClick={scrollToTop}
